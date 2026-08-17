@@ -26,7 +26,9 @@ export function GoogleLoginButton() {
         router.push("/");
         router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+        toast.error(
+          err instanceof Error ? err.message : "Google sign-in failed",
+        );
       } finally {
         busyRef.current = false;
       }
@@ -70,8 +72,10 @@ export function GoogleLoginButton() {
     return (
       <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-center text-sm text-amber-700">
         Google sign-in is not configured. Set{" "}
-        <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> in{" "}
-        <code className="rounded bg-amber-100 px-1">client/.env.local</code>.
+        <code className="rounded bg-amber-100 px-1">
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        </code>{" "}
+        in <code className="rounded bg-amber-100 px-1">client/.env.local</code>.
       </p>
     );
   }
