@@ -7,7 +7,12 @@ import { useProjects } from "@/hooks/use-projects";
 import { useAuth } from "@/components/providers/auth-context";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { TaskDetailDialog } from "@/components/tasks/task-detail-dialog";
-import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskStatus } from "@/lib/types";
+import {
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  type Task,
+  type TaskStatus,
+} from "@/lib/types";
 import {
   Select,
   SelectContent,
@@ -27,7 +32,7 @@ export default function MyTasksPage() {
   const filtered = myTasks.filter(
     (t) =>
       (status === "ALL" || t.status === status) &&
-      (projectId === "ALL" || t.projectId === projectId)
+      (projectId === "ALL" || t.projectId === projectId),
   );
 
   const todo = myTasks.filter((t) => t.status === "TODO").length;

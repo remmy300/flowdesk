@@ -57,11 +57,6 @@ cp .env.example .env.local   # edit NEXT_PUBLIC_API_URL if needed
 npm run dev                  # app on http://localhost:3000 (or 3001 if busy)
 ```
 
-Open the app in your browser, create an account, and log in. Seed demo accounts:
-
-- `alice@flowdesk.dev` / `password123` (owner)
-- `bob@flowdesk.dev` / `password123` (member)
-
 ## Features
 
 - **Auth** — register, login, logout with JWT in httpOnly cookies; profile avatar uploads via Cloudinary.

@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { getTask, updateTask, moveTask, deleteTask } from "../controllers/task.controller.js";
+import {
+  getTask,
+  listTasks,
+  updateTask,
+  moveTask,
+  deleteTask,
+} from "../controllers/task.controller.js";
 import { listComments, createComment } from "../controllers/comment.controller.js";
 import { validate } from "../middleware/validate.js";
 import { asyncHandler } from "../middleware/error.js";
@@ -12,6 +18,8 @@ import {
 } from "../lib/validation.js";
 
 const router = Router();
+
+router.get("/", asyncHandler(listTasks));
 
 router.get("/:id", validate(taskParams), asyncHandler(getTask));
 router.patch("/:id", validate(taskParams), validate(taskSchema), asyncHandler(updateTask));

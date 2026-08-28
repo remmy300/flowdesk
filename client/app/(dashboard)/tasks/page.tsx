@@ -29,14 +29,16 @@ export default function AllTasksPage() {
       (status === "ALL" || t.status === status) &&
       (priority === "ALL" || t.priority === priority) &&
       (projectId === "ALL" || t.projectId === projectId) &&
-      t.title.toLowerCase().includes(query.toLowerCase())
+      t.title.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">All tasks</h1>
-        <p className="text-sm text-muted-foreground">Every task across your projects.</p>
+        <p className="text-sm text-muted-foreground">
+          Every task across your projects.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
