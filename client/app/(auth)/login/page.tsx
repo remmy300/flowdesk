@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { GoogleLoginButton } from "@/components/auth/google-button";
+import { SignIn } from "@clerk/nextjs";
+import { RedirectIfAuthed } from "@/components/auth/guards";
+import { LegacyGoogleLogin } from "@/components/auth/legacy-google-login";
 import { Logo } from "@/components/common/logo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = {
   title: "Log in",
@@ -16,24 +10,20 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-center">
+    <RedirectIfAuthed>
+      <div className="flex flex-col items-center gap-6">
         <Logo size="lg" />
+
+        {/* Primary auth: Clerk. Handles OAuth providers + email out of the box. */}
+        <SignIn
+          routing="hash"
+          appearance={{ elements: { rootBox: "mx-auto", card: "shadow-sm" } }}
+        />
+
+        {/* Legacy Google sign-in — mounted only when the user opts in, so the
+            Google Identity script isn't loaded on every visit. */}
+        <LegacyGoogleLogin />
       </div>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Welcome to FlowDesk</CardTitle>
-          <CardDescription>Sign in with your Google account to continue.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <GoogleLoginButton />
-          <Separator />
-          <p className="text-center text-xs text-muted-foreground">
-            By continuing, you agree to the FlowDesk terms. Your first sign-in creates your
-            account automatically.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    </RedirectIfAuthed>
   );
 }

@@ -8,6 +8,10 @@ import { Spinner } from "@/components/common/loader";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
+// Guard against React StrictMode / HMR re-running the effect and calling
+// google.accounts.id.initialize() more than once.
+let gsiInitialized = false;
+
 export function GoogleLoginButton() {
   const { googleLogin } = useAuth();
   const router = useRouter();
@@ -36,12 +40,15 @@ export function GoogleLoginButton() {
 
     const init = () => {
       if (cancelled || !window.google?.accounts) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        auto_select: false,
-        callback: handleCredential,
-      });
-      window.google.accounts.id.disableAutoSelect();
+      if (!gsiInitialized) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          auto_select: false,
+          callback: handleCredential,
+        });
+        window.google.accounts.id.disableAutoSelect();
+        gsiInitialized = true;
+      }
       if (buttonRef.current) {
         window.google.accounts.id.renderButton(buttonRef.current, {
           type: "standard",

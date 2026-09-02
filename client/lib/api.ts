@@ -22,15 +22,37 @@ type RequestOptions = {
   headers?: Record<string, string>;
 };
 
+type ClerkGlobal = {
+  session?: { getToken: () => Promise<string | null> };
+};
+
+/**
+ * Grab the current Clerk session token (if the user signed in via Clerk).
+ * Returns null when Clerk isn't loaded or there's no session — the request
+ * then falls back to the legacy httpOnly `token` cookie via `credentials`.
+ */
+async function getClerkToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const clerk = (window as unknown as { Clerk?: ClerkGlobal }).Clerk;
+  try {
+    return (await clerk?.session?.getToken()) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function api<T>(
   path: string,
   { method = "GET", body, headers }: RequestOptions = {},
 ): Promise<T> {
+  const token = await getClerkToken();
+
   const res = await fetch(`${API_URL}${path}`, {
     method,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     body: body === undefined ? undefined : JSON.stringify(body),

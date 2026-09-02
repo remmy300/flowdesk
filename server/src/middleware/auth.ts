@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { ApiError } from "./error.js";
+import { resolveClerkUser, verifyClerkToken } from "../lib/clerk.js";
 
 export interface AuthUser {
   id: string;
@@ -55,6 +56,18 @@ export const requireAuth = async (
     const token = extractToken(req);
     if (!token) throw new ApiError(401, "Authentication required");
 
+    // 1) Preferred: a Clerk session token from the frontend.
+    const clerkId = await verifyClerkToken(token);
+    if (clerkId) {
+      try {
+        req.user = await resolveClerkUser(clerkId);
+      } catch {
+        throw new ApiError(401, "Could not resolve Clerk account");
+      }
+      return next();
+    }
+
+    // 2) Fallback: the legacy self-signed JWT (Google login / older sessions).
     let payload: TokenPayload;
     try {
       payload = jwt.verify(token, config.jwtSecret) as TokenPayload;

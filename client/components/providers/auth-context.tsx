@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import { authApi } from "@/lib/api";
 import type { User } from "@/lib/types";
 
@@ -9,6 +10,13 @@ type AuthContextValue = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  /**
+   * True when Clerk has an active session, regardless of whether the backend
+   * `User` row has been resolved yet. Guards use this to avoid redirect loops
+   * while `authApi.me()` is still in flight (or the server isn't configured).
+   */
+  hasSession: boolean;
+  /** Legacy Google-ID-token login. Kept for backward compatibility. */
   googleLogin: (idToken: string) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -21,8 +29,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Clerk session state. `isLoaded` gates the initial hydration so we don't
+  // briefly report "logged out" while Clerk is still booting.
+  const { isLoaded: clerkLoaded, isSignedIn, signOut } = useClerkAuth();
+
   const refresh = useCallback(async () => {
     try {
+      // `authApi.me()` is authed by the Clerk bearer token (see lib/api.ts) or,
+      // failing that, the legacy httpOnly cookie. Either way we get the local
+      // User row (DB id + role) that the rest of the app expects.
       const { user } = await authApi.me();
       setUser(user);
     } catch {
@@ -30,9 +45,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Re-hydrate whenever Clerk finishes loading or the sign-in state flips.
   useEffect(() => {
+    if (!clerkLoaded) return;
     refresh().finally(() => setIsLoading(false));
-  }, [refresh]);
+  }, [clerkLoaded, isSignedIn, refresh]);
 
   useEffect(() => {
     const onUnauthorized = () => setUser(null);
@@ -48,17 +65,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout();
+      await authApi.logout().catch(() => {});
+      if (isSignedIn) await signOut();
     } finally {
       setUser(null);
       router.push("/login");
       router.refresh();
     }
-  }, [router]);
+  }, [router, isSignedIn, signOut]);
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated: !!user, googleLogin, logout, refresh }}
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        hasSession: !!isSignedIn,
+        googleLogin,
+        logout,
+        refresh,
+      }}
     >
       {children}
     </AuthContext.Provider>
