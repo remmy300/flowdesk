@@ -14,12 +14,20 @@ import type { AuthUser } from "../middleware/auth.js";
 
 export const isClerkConfigured = () => Boolean(config.clerk.secretKey);
 
+if (!config.clerk.secretKey) {
+  console.warn(
+    "[clerk] CLERK_SECRET_KEY is not set Clerk session tokens will be rejected; only legacy JWT login works.",
+  );
+}
+
 const clerkClient = config.clerk.secretKey
   ? createClerkClient({ secretKey: config.clerk.secretKey })
   : null;
 
 /** Verify a Clerk session token. Returns the `sub` (Clerk user id) or null. */
-export const verifyClerkToken = async (token: string): Promise<string | null> => {
+export const verifyClerkToken = async (
+  token: string,
+): Promise<string | null> => {
   if (!config.clerk.secretKey) return null;
   try {
     const claims = await verifyToken(token, {
@@ -29,7 +37,8 @@ export const verifyClerkToken = async (token: string): Promise<string | null> =>
         : undefined,
     });
     return claims.sub ?? null;
-  } catch {
+  } catch (error) {
+    console.error("[clerk] Token verification failed:", error);
     return null;
   }
 };
@@ -50,7 +59,10 @@ export const resolveClerkUser = async (clerkId: string): Promise<AuthUser> => {
   if (!email) throw new Error("Clerk account has no email address");
 
   const name =
-    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() ||
+    [clerkUser.firstName, clerkUser.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
     clerkUser.username ||
     email.split("@")[0];
   const avatarUrl = clerkUser.imageUrl || null;
@@ -68,7 +80,13 @@ export const resolveClerkUser = async (clerkId: string): Promise<AuthUser> => {
     return prisma.user.update({
       where: { id: byEmail.id },
       data: { clerkId, avatarUrl: byEmail.avatarUrl ?? avatarUrl },
-      select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        role: true,
+      },
     });
   }
 

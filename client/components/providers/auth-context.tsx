@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import { authApi } from "@/lib/api";
@@ -16,7 +22,7 @@ type AuthContextValue = {
    * while `authApi.me()` is still in flight (or the server isn't configured).
    */
   hasSession: boolean;
-  /** Legacy Google-ID-token login. Kept for backward compatibility. */
+  /** Legacy GoogleID-token login. Kept for backward compatibility. */
   googleLogin: (idToken: string) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -54,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const onUnauthorized = () => setUser(null);
     window.addEventListener("auth:unauthorized", onUnauthorized);
-    return () => window.removeEventListener("auth:unauthorized", onUnauthorized);
+    return () =>
+      window.removeEventListener("auth:unauthorized", onUnauthorized);
   }, []);
 
   const googleLogin = useCallback(async (idToken: string) => {

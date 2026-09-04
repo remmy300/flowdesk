@@ -28,7 +28,7 @@ type ClerkGlobal = {
 
 /**
  * Grab the current Clerk session token (if the user signed in via Clerk).
- * Returns null when Clerk isn't loaded or there's no session — the request
+ * Returns null when Clerk isn't loaded or there's no session the request
  * then falls back to the legacy httpOnly `token` cookie via `credentials`.
  */
 async function getClerkToken(): Promise<string | null> {
@@ -46,6 +46,11 @@ export async function api<T>(
   { method = "GET", body, headers }: RequestOptions = {},
 ): Promise<T> {
   const token = await getClerkToken();
+
+  console.log(
+    "[API] Clerk token:",
+    token ? `FOUND (${token.substring(0, 20)}...)` : "NOT FOUND",
+  );
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
